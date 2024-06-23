@@ -1,0 +1,30 @@
+%%%-------------------------------------------------------------------
+%%% @author olegshipu
+%%% @copyright (C) 2024, <COMPANY>
+%%% @doc
+%%%
+%%% @end
+%%% Created : 16. Jun 2024 19:41
+%%%-------------------------------------------------------------------
+-module(task_1).
+-author("olegshipu").
+
+-export([is_in_range/3]).
+
+-include_lib("eunit/include/eunit.hrl").
+
+
+
+%% Check is Val in range [From, To], both edges included
+is_in_range(Val, Left, Right) ->
+  false.
+
+is_in_range_test() ->
+  ?assertEqual(true, is_in_range(5, 2, 10)),
+  ?assertEqual(true, is_in_range(5, 5, 10)),
+  ?assertEqual(true, is_in_range(5, 1, 5)),
+  ?assertEqual(false, is_in_range(50, 1, 5)),
+  ?assertEqual(false, is_in_range(-5, 1, 5)),
+  ?assertEqual(true, is_in_range(1, 1, 1)),
+  ?assertEqual(false, is_in_range(1, 5, 1)),
+  ok.
