@@ -14,9 +14,11 @@
 %% API
 -export([connect/0, handle_connection/0, get_all_pids/0, test_server/0]).
 
+-spec init_ets() -> table().
 init_ets() ->
   ets:new(connection_pids, [set, named_table, public]).
 
+-spec connect() -> pid().
 connect() ->
   case ets:info(connection_pids) of
     undefined -> init_ets();
@@ -27,9 +29,7 @@ connect() ->
   ets:insert(connection_pids, {Pid, Pid}),
   Pid.
 
-
-
-
+-spec handle_connection() -> atom().
 handle_connection() ->
   receive
     {calculate, From, Data} when is_pid(From) andalso is_tuple(Data) ->
@@ -46,7 +46,7 @@ handle_connection() ->
       handle_connection()
   end.
 
-
+-spec operation_validation({atom(), [number()]}) -> {ok, number()} | {error, iolist()}.
 operation_validation({RequestOperation, Args})  when is_atom(RequestOperation) andalso is_list(Args)->
   {Code, MyOperation} = operation(RequestOperation),
   case Code of
@@ -57,12 +57,13 @@ operation_validation({RequestOperation, Args})  when is_atom(RequestOperation) a
   end;
 operation_validation(Data) -> {error, io_lib:format("unknown data ~p~n", [Data])}.
 
+-spec divider_args(atom(), [number()], number()) -> number().
 divider_args(_, [], Acc) -> Acc;
 divider_args(Operation, [A|Tail], Acc) ->
   io:format("Step_divider: Acc is ~p, A is ~p, Tail is ~p~n", [Acc, A, Tail]),
   divider_args(Operation, Tail, erlang:apply(erlang, Operation, [A,Acc])).
 
-
+-spec operation(atom()) -> {ok, atom()} | {error, iolist()}.
 operation(add) -> {ok, '+'};
 operation(sub) -> {ok, '-'};
 operation(mul) -> {ok, '*'};
@@ -71,7 +72,7 @@ operation(remainder) -> {ok, 'rem'};
 operation(AnotherAtom) ->
   {error, io_lib:format("Invalid operation: ~p~n", [AnotherAtom])}.
 
-
+-spec get_all_pids() -> [pid()].
 get_all_pids() ->
   case ets:info(connection_pids) of
     undefined -> init_ets();
@@ -79,9 +80,6 @@ get_all_pids() ->
   end,
   Pids = ets:tab2list(connection_pids),
   [Pid || {Pid, _} <- Pids].
-
-
-
 
 
 %% TEST_PART
