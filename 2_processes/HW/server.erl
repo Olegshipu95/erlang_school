@@ -29,7 +29,7 @@ connect() ->
   ets:insert(connection_pids, {Pid, Pid}),
   Pid.
 
--spec handle_connection() -> atom().
+-spec handle_connection() -> ok.
 handle_connection() ->
   receive
     {calculate, From, Data} when is_pid(From) andalso is_tuple(Data) ->
