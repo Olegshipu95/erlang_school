@@ -12,9 +12,9 @@
 -include_lib("eunit/include/eunit.hrl").
 
 %% API
--export([connect/0, handle_connection/0, get_all_pids/0, test_server/0]).
+-export([connect/0, handle_connection/0, get_all_pids/0, test_add/0, test_sub/0, test_mul/0]).
 
--spec init_ets() -> table().
+-spec init_ets() -> atom().
 init_ets() ->
   ets:new(connection_pids, [set, named_table, public]).
 
@@ -46,7 +46,7 @@ handle_connection() ->
       handle_connection()
   end.
 
--spec success_operation({atom(), [number()]}) -> {ok, number()} | {error, iolist() | {error, atom()}}.
+-spec success_operation({atom(), list()}) -> {ok, any()} | {error, any()}.
 success_operation(Data = {RequestOperation, Args}) when is_atom(RequestOperation) andalso is_list(Args) ->
   ReturnResult = try operation_validation(Data) of
                    ResultOfOperation -> {ok, ResultOfOperation}
@@ -56,22 +56,25 @@ success_operation(Data = {RequestOperation, Args}) when is_atom(RequestOperation
   ReturnResult;
 success_operation(Data) -> {error, io_lib:format("unknown data ~p~n", [Data])}.
 
-
--spec operation_validation({atom(), [number()]}) -> {ok, number()}.
+-spec operation_validation({atom(), list()}) -> any();
+    (integer()) -> integer();
+    (any()) -> no_return().
 operation_validation({RequestOperation, Args}) when is_atom(RequestOperation) andalso is_list(Args) ->
   {Code, Fun} = operation(RequestOperation),
   Result = case Code of
              ok ->
                io:format("My operation is - ~p, my args - ~p~n", [Fun, Args]),
                Fun(Args);
-             _ -> throw(incorrect_operation)
+             Error -> io:format("Error - ~p~n", [Error]),
+               throw(incorrect_operation)
            end,
   Result;
-operation_validation(X) when is_integer(X) -> X;
-operation_validation(_Data) -> throw(incorrect_data).
+operation_validation(X) when is_number(X) -> X;
+operation_validation(Error) -> io:format("Error in operation validation - ~p~n", [Error]),
+  throw(incorrect_data).
 
 
--spec operation(atom()) -> {ok, Fun} | {error, iolist()}.
+-spec operation(atom()) -> {ok, fun((list()) -> any())} | {error, list()}.
 operation(add) -> {ok, fun(Args) -> lists:foldl(fun(Arg, Acc) -> operation_validation(Arg) + Acc end, 0, Args) end};
 operation(sub) ->
   {ok, fun(Args) -> lists:foldl(fun(Arg, Acc) -> Acc - operation_validation(Arg) end, hd(Args), tl(Args)) end};
@@ -90,7 +93,6 @@ get_all_pids() ->
   Pids = ets:tab2list(connection_pids),
   [Pid || {Pid, _} <- Pids].
 
-
 %% TEST_PART
 
 calculate(Pid, Request) ->
@@ -103,8 +105,26 @@ calculate(Pid, Request) ->
     {error, timeout}
   end.
 
-test_server() ->
+test_add() ->
   Pid = server:connect(),
   io:format("~p: send to ~p~n", [self(), Pid]),
   calculate(Pid, {add, [1, 2, 3.06, -1]}),
+  Pid ! exit.
+
+test_sub() ->
+  Pid = server:connect(),
+  io:format("~p: send to ~p~n", [self(), Pid]),
+  calculate(Pid, {sub, [10, 1, 2, 3]}),
+  Pid ! exit.
+
+test_mul() ->
+  Pid = server:connect(),
+  io:format("~p: send to ~p~n", [self(), Pid]),
+  calculate(Pid, {mul, [1, 2, 3, 4, 5]}),
+  Pid ! exit.
+
+polish_notation_test() ->
+  Pid = server:connect(),
+  io:format("~p: send to ~p~n", [self(), Pid]),
+  calculate(Pid, {add, [1, 2, 3, {sub, [4, 5]}]}),
   Pid ! exit.
