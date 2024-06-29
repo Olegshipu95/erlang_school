@@ -12,7 +12,7 @@
 -include_lib("eunit/include/eunit.hrl").
 
 %% API
--export([connect/0, handle_connection/0, get_all_pids/0, test_add/0, test_sub/0, test_mul/0]).
+-export([connect/0, handle_connection/0, get_all_pids/0]).
 
 -spec init_ets() -> atom().
 init_ets() ->
@@ -105,26 +105,26 @@ calculate(Pid, Request) ->
     {error, timeout}
   end.
 
-test_add() ->
+add_test() ->
   Pid = server:connect(),
   io:format("~p: send to ~p~n", [self(), Pid]),
-  calculate(Pid, {add, [1, 2, 3.06, -1]}),
+  ?_assertEqual(5.06, calculate(Pid, {add, [1, 2, 3.06, -1]})),
   Pid ! exit.
 
-test_sub() ->
+sub_test() ->
   Pid = server:connect(),
   io:format("~p: send to ~p~n", [self(), Pid]),
-  calculate(Pid, {sub, [10, 1, 2, 3]}),
+  ?_assertEqual(4, calculate(Pid, {sub, [10, 1, 2, 3]})),
   Pid ! exit.
 
-test_mul() ->
+mul_test() ->
   Pid = server:connect(),
   io:format("~p: send to ~p~n", [self(), Pid]),
-  calculate(Pid, {mul, [1, 2, 3, 4, 5]}),
+  ?_assertEqual(120, calculate(Pid, {mul, [1, 2, 3, 4, 5]})),
   Pid ! exit.
 
 polish_notation_test() ->
   Pid = server:connect(),
   io:format("~p: send to ~p~n", [self(), Pid]),
-  calculate(Pid, {add, [1, 2, 3, {sub, [4, 5]}]}),
+  ?_assertEqual(5, calculate(Pid, {add, [1, 2, 3, {sub, [4, 5]}]})),
   Pid ! exit.
